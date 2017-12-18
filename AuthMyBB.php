@@ -5,7 +5,7 @@ class AuthMyBB extends AuthPlugin {
 	/**
 	 * @var string The path to your copy of MyBB (with a trailing slash)
 	 */
-	var $forum_path = "RELATIVE PATH TO FORUMROOT";
+	var $forum_path = "../forums/";
 
 	/**
 	 * @var array An array of user group IDs for banned user groups (defaults to the MyBB banned group)
@@ -48,19 +48,20 @@ class AuthMyBB extends AuthPlugin {
 
 	function openDB()
 	{
-		$this->db = mysql_connect($this->config['database']['hostname'], $this->config['database']['username'], $this->config['database']['password']) or die("Unable to connect to MyBB database.");
-		mysql_select_db($this->config['database']['database']) or die("Unable to select MyBB database");
+		$this->db = mysqli_connect($this->config['database']['hostname'], $this->config['database']['username'], $this->config['database']['password'], $this->config['database']['database']) or die("Unable to connect to MyBB database.");
+
 		
 	}
 
 	function userExists($username)
 	{
 		if(!is_object($this->db)) { $this->openDB(); }
-		$query = mysql_query("SELECT username FROM {$this->table_prefix}users WHERE username='".$this->escape_string($username)."'", $this->db);
-		$user = mysql_fetch_assoc($query);
+		$query = mysqli_query($this->db, "SELECT username FROM {$this->table_prefix}users WHERE username='".$username."'");
+		$user = mysqli_fetch_assoc($query);
 		if($user['username'])
 		{
 			return true;
+
 		}
 		else
 		{
@@ -83,9 +84,12 @@ class AuthMyBB extends AuthPlugin {
 	function authenticate($username, $password)
 	{
 		if(!is_object($this->db)) { $this->openDB(); }
-		$query = mysql_query("SELECT username,password,salt,usergroup FROM {$this->table_prefix}users WHERE username='".$this->escape_string($username)."'", $this->db);
-		$user = mysql_fetch_array($query);
+		$query = mysqli_query($this->db, "SELECT username,password,salt,usergroup FROM {$this->table_prefix}users WHERE username='".$username."'");
+		$user = mysqli_fetch_array($query);
 		$saltedpw = md5(md5($user['salt']).md5($password));
+
+
+
 		if($user['username'] && $user['password'] == $saltedpw)
 		{
 			if(in_array($user['usergroup'], $this->banned_usergroups))
@@ -148,9 +152,10 @@ class AuthMyBB extends AuthPlugin {
 	 */
 	function updateUser( &$user ) {
 		if(!is_resource($this->db)) { $this->openDB(); }
-		$query = mysql_query("SELECT username,email,usergroup,additionalgroups FROM {$this->table_prefix}users WHERE username='".$this->escape_string($user->mName)."'", $this->db);
-		$res = mysql_fetch_array($query);
-
+		$query = mysqli_query($this->db, "SELECT username,email,usergroup,additionalgroups FROM {$this->table_prefix}users WHERE username='".$user->mName."'");
+		$res = mysqli_fetch_array($query);
+//var_dump($user);
+//die("ding");
 		if($res)
 		{
 			if(in_array($res['usergroup'], $this->admin_usergroups))
@@ -158,7 +163,7 @@ class AuthMyBB extends AuthPlugin {
 				$is_admin = true;
 			}
 			$memberships = explode(",", $res['additionalgroups']);
-			
+
 			for($i=0;$i<count($memberships);$i++)
 			{
 				if(in_array($memberships[$x], $this->admin_usergroups))
@@ -166,22 +171,22 @@ class AuthMyBB extends AuthPlugin {
 					$is_admin = true;
 				}
 			}
-			
+
 			if($is_admin == true)
 			{
 				// If a user is not a sysop, make them a sysop
 				if (!in_array("sysop", $user->getEffectiveGroups())) {
 					$user->addGroup('sysop');
-				}				
+				}
 			}
 			else
 			{
 				if (in_array("sysop", $user->getEffectiveGroups())) {
 					$user->removeGroup('sysop');
 					return TRUE;
-				}				
+				}
 			}
-			
+
 			$user->setEmail($res['email']);
 			$user->setRealName($res['username']);
 			return TRUE;
@@ -207,7 +212,7 @@ class AuthMyBB extends AuthPlugin {
 	function autoCreate() {
 		return true;
 	}
-	
+
 	/**
 	 * Set the given password in the authentication database.
 	 * Return true if successful.
@@ -268,7 +273,7 @@ class AuthMyBB extends AuthPlugin {
 	function strict() {
 		return true;
 	}
-	
+
 	/**
 	 * When creating a user account, optionally fill in preferences and such.
 	 * For instance, you might pull the email address or real name from the
@@ -290,15 +295,15 @@ class AuthMyBB extends AuthPlugin {
 	 * check, now is your chance.
 	 */
 	function getCanonicalName ( $username ) {
-		// connecting to MediaWiki database for this check 		
+		// connecting to MediaWiki database for this check
 		$dbr =& wfGetDB( DB_SLAVE );
-		
+
 		$res = $dbr->selectRow('user',
 				       array("user_name"),
 				       "lower(user_name)=lower(".
 				         $dbr->addQuotes($username).")",
 				       "AuthMyBB::getCanonicalName" );
-		
+
 		if($res) {
 			return $res->user_name;
 		} else {
@@ -308,9 +313,9 @@ class AuthMyBB extends AuthPlugin {
 
 	function escape_string($string)
 	{
-		if(function_exists("mysql_real_escape_string"))
+		if(function_exists("mysqli_real_escape_string"))
 		{
-			return mysql_real_escape_string($string, $this->db);
+			return mysqli_real_escape_string($string, $this->db);
 		}
 		else
 		{
