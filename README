@@ -28,6 +28,7 @@ Installation Instructions
    ---
    require_once( './AuthMyBB.php' );
    $wgAuth = new AuthMyBB();
+   $wgGroupPermissions['*']['autocreateaccount'] = true;
    --
 
 5. Attempt to login to MediaWiki using a MyBB account. It should log you in and give you
