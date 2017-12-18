@@ -1,0 +1,35 @@
+/**
+ * MyBB <-> MediaWiki Integration Modification
+ *
+ * This MediaWiki authentication module allows
+ * you to integrate your MyBB user database
+ * with MediaWiki
+ *
+ */
+
+Installation Instructions
+-------------------------
+
+1. Open "AuthMyBB.php" from this archive in a text editor.
+
+2. Change the line:
+   --
+   var $forum_path = "../forums/";
+   --
+
+   To point to the path of your copy of MyBB. For example, the default value
+   assumes your copy of MyBB is in its own directory above the MediaWiki directory.
+
+3. Upload "AuthMyBB.php" to your MediaWiki directory
+
+4. Open LocalSettings.php (MediaWiki directory) and before the trailing ?> (last line)
+   add the following:
+
+   ---
+   require_once( './AuthMyBB.php' );
+   $wgAuth = new AuthMyBB();
+   --
+
+5. Attempt to login to MediaWiki using a MyBB account. It should log you in and give you
+   the appropriate level of access.
+   
