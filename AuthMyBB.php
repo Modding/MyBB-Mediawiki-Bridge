@@ -3,7 +3,7 @@ require_once "includes/AuthPlugin.php";
 
 class AuthMyBB extends AuthPlugin {
 	/**
-	 * @var string The path to your copy of MyBB (with a trailing slash)
+	 * @var string The path to your copy of BB (with a trailing slash)
 	 */
 	var $forum_path = "../forums/";
 
